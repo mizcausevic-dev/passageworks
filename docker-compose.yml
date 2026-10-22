@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: passageworks
+      POSTGRES_PASSWORD: passageworks
+      POSTGRES_DB: passageworks
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+  api:
+    build: .
+    command: ["node", "--experimental-strip-types", "apps/server/src/index.ts"]
+    environment:
+      DATABASE_URL: postgres://passageworks:passageworks@postgres:5432/passageworks
+      STORAGE_ROOT: /data/storage
+      WEB_DIST: /app/apps/web/dist
+      HOST: 0.0.0.0
+      PORT: "8787"
+      NODE_ENV: production
+      SEED_DEMO: "true"
+      DEMO_EMAIL: archivist@northglass.example
+      DEMO_PASSWORD: northglass-demo-pass
+    volumes:
+      - storage:/data/storage
+    ports:
+      - "127.0.0.1:8787:8787"
+    depends_on:
+      - postgres
+  worker:
+    build: .
+    command: ["node", "--experimental-strip-types", "apps/server/src/worker.ts"]
+    environment:
+      DATABASE_URL: postgres://passageworks:passageworks@postgres:5432/passageworks
+      STORAGE_ROOT: /data/storage
+      NODE_ENV: production
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      - postgres
+volumes:
+  pgdata:
+  storage:
