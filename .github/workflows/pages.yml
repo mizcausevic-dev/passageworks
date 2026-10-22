@@ -32,7 +32,10 @@ jobs:
     permissions:
       contents: write
       pages: write
-      administration: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -68,4 +71,10 @@ jobs:
           || gh api --method PUT "/repos/${{ github.repository }}/pages" \
             -f build_type=legacy \
             -f "source[branch]=pages" \
-            -f "source[path]=/"
+            -f "source[path]=/" \
+          || echo "Could not switch the Pages source to the pages branch. The Actions deployment below publishes the same build."
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: apps/web/dist
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
