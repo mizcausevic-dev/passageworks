@@ -1,0 +1,48 @@
+{
+  "name": "passageworks",
+  "private": true,
+  "type": "module",
+  "description": "Collaborative research workspace for source ingestion, annotation, lexical search, and cited briefs.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "fixtures": "node --experimental-strip-types scripts/make-fixtures.ts",
+    "test": "node --experimental-strip-types --test packages/domain/test/*.test.ts apps/server/test/*.test.ts",
+    "typecheck": "tsc -p packages/domain/tsconfig.json --noEmit && tsc -p apps/server/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
+    "build:web": "npm run build -w @passageworks/web",
+    "preflight": "node scripts/preflight.mjs",
+    "dev:server": "node --experimental-strip-types --watch apps/server/src/index.ts",
+    "dev:worker": "node --experimental-strip-types --watch apps/server/src/worker.ts",
+    "dev:web": "npm run dev -w @passageworks/web",
+    "seed": "node --experimental-strip-types apps/server/src/seed.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.13",
+    "pg": "^8.16.3",
+    "sanitize-html": "^2.18.1",
+    "undici": "^7.30.1",
+    "unpdf": "^1.4.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "@types/node": "^22.19.1",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@types/sanitize-html": "^2.16.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "pdf-lib": "^1.17.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4"
+  }
+}
