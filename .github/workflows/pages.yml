@@ -1,0 +1,71 @@
+name: test-and-pages
+
+on:
+  push:
+    branches: [main, cursor/passageworks-33e2]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: passageworks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc -p packages/domain/tsconfig.json --noEmit && npx tsc -p apps/server/tsconfig.json --noEmit && npx tsc -p apps/web/tsconfig.json --noEmit
+
+  pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      administration: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @passageworks/web
+        env:
+          VITE_DEMO_MODE: "true"
+          VITE_BASE: /${{ github.event.repository.name }}/
+      - run: node scripts/preflight.mjs
+      - name: Publish the static preview on the pages branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cp apps/web/dist/index.html apps/web/dist/404.html
+          touch apps/web/dist/.nojekyll
+          rm -rf /tmp/pages-publish
+          mkdir -p /tmp/pages-publish
+          cp -a apps/web/dist/. /tmp/pages-publish/
+          git -C /tmp/pages-publish init -b pages
+          git -C /tmp/pages-publish config user.email "actions@github.com"
+          git -C /tmp/pages-publish config user.name "github-actions"
+          git -C /tmp/pages-publish add -A
+          git -C /tmp/pages-publish commit -m "Publish the Passageworks browser preview."
+          git -C /tmp/pages-publish push --force "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" pages
+          gh api --method POST "/repos/${{ github.repository }}/pages" \
+            -f build_type=legacy \
+            -f "source[branch]=pages" \
+            -f "source[path]=/" \
+          || gh api --method PUT "/repos/${{ github.repository }}/pages" \
+            -f build_type=legacy \
+            -f "source[branch]=pages" \
+            -f "source[path]=/"
