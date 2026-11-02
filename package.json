@@ -29,7 +29,7 @@
     "sanitize-html": "^2.18.1",
     "undici": "^7.30.1",
     "unpdf": "^1.4.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.14",
